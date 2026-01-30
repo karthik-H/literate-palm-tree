@@ -1,2 +1,14 @@
-# literate-palm-tree
-Todo manager demo project
+# Todo-manager-dev
+Personal Todo manager
+
+## Functional Requirements
+- Add new tasks with: 
+  - Title 
+  - Description
+  - Priority
+  - Due date
+  - Tag
+- Edit existing tasks 
+- Delete tasks   
+- Mark tasks as **Completed** or **Pending**       
+  
