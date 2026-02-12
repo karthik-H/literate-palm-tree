@@ -1,5 +1,3763 @@
 {
-  "function": [],
-  "component": [],
-  "endpoint": []
+  "function": [
+    {
+      "implementation_id": "App-task-creation-handler",
+      "test_cases": [
+        {
+          "description": "Create a new task with valid data and verify the task is persisted, task list is reloaded, and form is closed.",
+          "id": "tc_create_task_successful",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_successful",
+          "test_setup": {
+            "given": "A valid task form input is provided (e.g., title: 'Buy milk', description: 'Get 2 liters of milk'). The API and backend are available.",
+            "then": "api.createTask is called with correct data, the task list is reloaded (e.g., api.getTasks is called), and the form is closed.",
+            "when": "handleCreateTask is called with the valid input."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "API call to create a task fails (e.g., network error or backend error). The task list is not reloaded, and the form should not close.",
+          "id": "tc_create_task_api_failure",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_api_failure",
+          "test_setup": {
+            "given": "A valid task form input is provided. api.createTask returns an error (network failure or server error).",
+            "then": "The error is handled gracefully, the task list is not reloaded, and the form remains open with an error message shown to the user.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Task is created successfully, but reloading the task list fails (e.g., network error on reload). The form should still close, but an error may be displayed.",
+          "id": "tc_create_task_reload_failure",
+          "implementation_id": "App-task-creation-handler",
+          "name": "reload_task_list_failure",
+          "test_setup": {
+            "given": "A valid task form input is provided. api.createTask succeeds, but reloading the task list (api.getTasks) fails.",
+            "then": "The form closes, the user is notified that the task list failed to reload, and the UI remains stable.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempt to create a task with an empty title. The API should not be called, and validation error should be shown.",
+          "id": "tc_create_task_empty_title",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_with_empty_title",
+          "test_setup": {
+            "given": "A task form input with an empty title and valid description is provided.",
+            "then": "api.createTask is not called, the form remains open, and a validation error is displayed to the user.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Create a task with the minimal valid data (e.g., only required fields filled).",
+          "id": "tc_create_task_minimal_input",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_with_minimal_input",
+          "test_setup": {
+            "given": "A task form input where only the required fields (e.g., title) are provided.",
+            "then": "api.createTask is called with minimal data, the task list is reloaded, and the form is closed.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Create a task where the title and description fields are at their maximum allowed lengths.",
+          "id": "tc_create_task_max_length_fields",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_with_max_length_fields",
+          "test_setup": {
+            "given": "A task form input with title and description fields filled to their maximum allowed lengths (e.g., title: 'T.repeat(255)', description: 'T.repeat(1024)').",
+            "then": "api.createTask is called with max-length data, the task list is reloaded, and the form is closed.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to create a task with a title that already exists. The API returns a duplicate error.",
+          "id": "tc_create_task_duplicate_title",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_with_duplicate_title",
+          "test_setup": {
+            "given": "A task form input with a title that matches an existing task. api.createTask returns a duplicate error.",
+            "then": "The error is displayed to the user, the form remains open, and the task list is not reloaded.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "User submits the form multiple times in quick succession; ensures no duplicate tasks are created and UI is stable.",
+          "id": "tc_create_task_rapid_submissions",
+          "implementation_id": "App-task-creation-handler",
+          "name": "rapid_task_form_submissions",
+          "test_setup": {
+            "given": "User clicks the submit button multiple times rapidly with the same valid input.",
+            "then": "Only one API call is made (or duplicate submissions are prevented), and only one task is created. The form closes after the process.",
+            "when": "handleCreateTask is invoked multiple times in quick succession."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verify that after a successful task creation and task list reload, the task form is closed.",
+          "id": "tc_create_task_form_closes_on_success",
+          "implementation_id": "App-task-creation-handler",
+          "name": "form_closes_on_success",
+          "test_setup": {
+            "given": "A valid task form input is provided.",
+            "then": "The task form is closed and no longer visible to the user.",
+            "when": "handleCreateTask is called and both API calls succeed."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempt to create a task with invalid data types (e.g., title is a number). Should fail validation and not call API.",
+          "id": "tc_create_task_invalid_data_type",
+          "implementation_id": "App-task-creation-handler",
+          "name": "create_task_with_invalid_data_type",
+          "test_setup": {
+            "given": "A task form input with incorrect data types (e.g., title: 12345).",
+            "then": "api.createTask is not called, the form remains open, and a validation error is displayed.",
+            "when": "handleCreateTask is called."
+          },
+          "type": "negative"
+        }
+      ]
+    },
+    {
+      "implementation_id": "api-createTask-function",
+      "test_cases": [
+        {
+          "description": "Verify that a task is successfully created when valid data is provided.",
+          "id": "create_task_valid_data",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with valid data",
+          "test_setup": {
+            "given": "A valid task object: {\"title\": \"Buy groceries\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function returns the created task object with an assigned ID and correct fields",
+            "when": "api.createTask is called with the valid task object"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verify function throws error when required field (e.g., title) is missing.",
+          "id": "create_task_missing_required_field",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task missing required field",
+          "test_setup": {
+            "given": "A task object missing the 'title' field: {\"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function throws an error indicating missing required field",
+            "when": "api.createTask is called with the incomplete task object"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify function throws error when the title field is empty.",
+          "id": "create_task_empty_title",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with empty title",
+          "test_setup": {
+            "given": "A task object with an empty title: {\"title\": \"\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function throws an error indicating invalid title",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verify that an error is thrown when dueDate is not a valid date.",
+          "id": "create_task_invalid_date",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with invalid due date",
+          "test_setup": {
+            "given": "A task object with an invalid dueDate: {\"title\": \"Buy groceries\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"not-a-date\", \"priority\": \"high\"}",
+            "then": "The function throws an error indicating invalid date format",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify task creation with title at maximum allowed length.",
+          "id": "create_task_boundary_title_length",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with boundary title length",
+          "test_setup": {
+            "given": "A task object with title of maximum length (e.g., 255 characters): {\"title\": \"T.repeat(255)\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function returns the created task object",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verify function throws error when title exceeds maximum allowed length.",
+          "id": "create_task_exceed_title_length",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with title exceeding max length",
+          "test_setup": {
+            "given": "A task object with title length over 255 characters: {\"title\": \"T.repeat(256)\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function throws an error indicating title is too long",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify function throws error when priority is not within allowed values.",
+          "id": "create_task_invalid_priority",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with invalid priority value",
+          "test_setup": {
+            "given": "A task object with invalid priority: {\"title\": \"Buy groceries\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"urgent\"}",
+            "then": "The function throws an error indicating invalid priority value",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify task is created when optional description field is omitted.",
+          "id": "create_task_no_description",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with no description",
+          "test_setup": {
+            "given": "A task object without description: {\"title\": \"Buy groceries\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function returns the created task object with description as null or empty",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verify function throws error when required fields are explicitly null.",
+          "id": "create_task_null_fields",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with null fields",
+          "test_setup": {
+            "given": "A task object with 'title' as null: {\"title\": null, \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"}",
+            "then": "The function throws an error indicating invalid input",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify function throws error when backend responds with server error (e.g., 500).",
+          "id": "create_task_backend_error",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task when backend returns error",
+          "test_setup": {
+            "given": "A valid task object: {\"title\": \"Buy groceries\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"} and backend is configured to return an error",
+            "then": "The function throws an error with appropriate message",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify function throws error when network request fails.",
+          "id": "create_task_network_failure",
+          "implementation_id": "api-createTask-function",
+          "name": "Create task with network failure",
+          "test_setup": {
+            "given": "A valid task object: {\"title\": \"Buy groceries\", \"description\": \"Milk, Bread, Eggs\", \"dueDate\": \"2024-07-01\", \"priority\": \"high\"} and network is down",
+            "then": "The function throws a network error",
+            "when": "api.createTask is called with the task object"
+          },
+          "type": "negative"
+        }
+      ]
+    },
+    {
+      "implementation_id": "database-add-task-function",
+      "test_cases": [
+        {
+          "description": "Tests adding a task with valid title and description.",
+          "id": "add_task_valid_input",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Valid Input",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Milk, Bread, Eggs",
+                "title": "Buy groceries"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "storage_contains_new_task": true,
+              "task": {
+                "description": "Milk, Bread, Eggs",
+                "id": "unique_id_generated",
+                "title": "Buy groceries"
+              }
+            },
+            "when": "add_task is called with valid title and description"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Tests adding a task when the storage file contains no tasks.",
+          "id": "add_task_empty_storage",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task When Storage is Empty",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Setup project",
+                "title": "First Task"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "storage_contains_new_task": true,
+              "task": {
+                "description": "Setup project",
+                "id": "unique_id_generated",
+                "title": "First Task"
+              }
+            },
+            "when": "add_task is called with valid data on empty storage"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests adding a task when other tasks already exist in storage.",
+          "id": "add_task_existing_tasks",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task When Tasks Already Exist",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Should be appended",
+                "title": "New Task"
+              },
+              "tasks_storage": [
+                {
+                  "description": "Already persisted",
+                  "id": "1",
+                  "title": "Existing Task"
+                }
+              ]
+            },
+            "then": {
+              "storage_task_count_increased": true,
+              "task": {
+                "description": "Should be appended",
+                "id": "unique_id_generated",
+                "title": "New Task"
+              }
+            },
+            "when": "add_task is called with valid data"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Tests adding a task with a title already present in storage.",
+          "id": "add_task_duplicate_title",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Duplicate Title",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "New Task",
+                "title": "Duplicate"
+              },
+              "tasks_storage": [
+                {
+                  "description": "Original",
+                  "id": "1",
+                  "title": "Duplicate"
+                }
+              ]
+            },
+            "then": {
+              "storage_contains_multiple_tasks_with_same_title": true,
+              "task": {
+                "description": "New Task",
+                "id": "unique_id_generated",
+                "title": "Duplicate"
+              }
+            },
+            "when": "add_task is called with duplicate title"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Tests error handling when title is missing from input.",
+          "id": "add_task_missing_title",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Missing Title",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Task without title"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "error": "Missing required field: title"
+            },
+            "when": "add_task is called without a title"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests error handling when description is missing from input.",
+          "id": "add_task_missing_description",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Missing Description",
+          "test_setup": {
+            "given": {
+              "input": {
+                "title": "Task without description"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "error": "Missing required field: description"
+            },
+            "when": "add_task is called without a description"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests handling of empty string for title.",
+          "id": "add_task_empty_title",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Empty Title",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Some description",
+                "title": ""
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "error": "Title cannot be empty"
+            },
+            "when": "add_task is called with empty title"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests handling of empty string for description.",
+          "id": "add_task_empty_description",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Empty Description",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "",
+                "title": "Valid Title"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "error": "Description cannot be empty"
+            },
+            "when": "add_task is called with empty description"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests adding a task with a title at maximum allowed length.",
+          "id": "add_task_long_title",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Very Long Title",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "A valid description",
+                "title": "T.repeat(255)"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "task": {
+                "description": "A valid description",
+                "id": "unique_id_generated",
+                "title": "T.repeat(255)"
+              }
+            },
+            "when": "add_task is called with maximum length title"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests adding a task with a description at maximum allowed length.",
+          "id": "add_task_long_description",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task with Very Long Description",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "T.repeat(1024)",
+                "title": "Valid Title"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "task": {
+                "description": "T.repeat(1024)",
+                "id": "unique_id_generated",
+                "title": "Valid Title"
+              }
+            },
+            "when": "add_task is called with maximum length description"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests error handling when storage file is corrupted or unreadable.",
+          "id": "add_task_invalid_storage_file",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task When Storage File Is Invalid",
+          "test_setup": {
+            "given": {
+              "tasks_storage": "corrupted_file"
+            },
+            "then": {
+              "error": "Storage file is invalid or unreadable"
+            },
+            "when": "add_task is called"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests error handling when saving tasks back to storage fails.",
+          "id": "add_task_storage_write_failure",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task When Storage Write Fails",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Test write error",
+                "title": "Write Failure"
+              },
+              "simulate_write_failure": true,
+              "tasks_storage": []
+            },
+            "then": {
+              "error": "Failed to save tasks to storage"
+            },
+            "when": "add_task is called"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests that each added task gets a unique ID, even when called consecutively.",
+          "id": "add_task_id_uniqueness",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Multiple Tasks and Ensure Unique ID",
+          "test_setup": {
+            "given": {
+              "inputs": [
+                {
+                  "description": "Desc 1",
+                  "title": "Task 1"
+                },
+                {
+                  "description": "Desc 2",
+                  "title": "Task 2"
+                }
+              ],
+              "tasks_storage": []
+            },
+            "then": {
+              "ids_are_unique": true,
+              "tasks": [
+                {
+                  "description": "Desc 1",
+                  "id": "unique_id_1",
+                  "title": "Task 1"
+                },
+                {
+                  "description": "Desc 2",
+                  "id": "unique_id_2",
+                  "title": "Task 2"
+                }
+              ]
+            },
+            "when": "add_task is called twice with different inputs"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests adding a task with special characters in title and description.",
+          "id": "add_task_special_characters",
+          "implementation_id": "database-add-task-function",
+          "name": "Add Task With Special Characters",
+          "test_setup": {
+            "given": {
+              "input": {
+                "description": "Description with emoji \ud83d\ude80",
+                "title": "!@#$%^&*()_+|"
+              },
+              "tasks_storage": []
+            },
+            "then": {
+              "task": {
+                "description": "Description with emoji \ud83d\ude80",
+                "id": "unique_id_generated",
+                "title": "!@#$%^&*()_+|"
+              }
+            },
+            "when": "add_task is called"
+          },
+          "type": "positive"
+        }
+      ]
+    },
+    {
+      "implementation_id": "api-update-task",
+      "test_cases": [
+        {
+          "description": "Test updating a task with valid ID and data. The backend returns HTTP 200 and updated task.",
+          "id": "updateTask_valid_task_update",
+          "implementation_id": "api-update-task",
+          "name": "Valid Task Update",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": true,
+                "description": "Updated Description",
+                "title": "Updated Title"
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "Old Description",
+                    "id": 123,
+                    "title": "Old Title"
+                  }
+                ]
+              },
+              "task_id": 123
+            },
+            "then": {
+              "response_body_json": {
+                "completed": true,
+                "description": "Updated Description",
+                "id": 123,
+                "title": "Updated Title"
+              },
+              "status": 200
+            },
+            "when": "updateTask is called with task_id=123 and updated data"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Test updating a task with an ID that does not exist. The backend returns HTTP 404.",
+          "id": "updateTask_invalid_task_id",
+          "implementation_id": "api-update-task",
+          "name": "Update Non-existent Task",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": false,
+                "description": "Should fail",
+                "title": "Attempt Update"
+              },
+              "server_state": {
+                "existing_tasks": []
+              },
+              "task_id": 999
+            },
+            "then": {
+              "error": "Task not found",
+              "status": 404
+            },
+            "when": "updateTask is called with task_id=999 and data"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Test updating a task with invalid/malformed data (e.g., missing required fields). The backend returns HTTP 400.",
+          "id": "updateTask_invalid_request_body",
+          "implementation_id": "api-update-task",
+          "name": "Invalid Request Body",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "description": "No title provided"
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "Old Description",
+                    "id": 123,
+                    "title": "Old Title"
+                  }
+                ]
+              },
+              "task_id": 123
+            },
+            "then": {
+              "error": "Invalid request body",
+              "status": 400
+            },
+            "when": "updateTask is called with task_id=123 and missing title"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Test when backend returns HTTP 500 Internal Server Error. Function should throw.",
+          "id": "updateTask_server_error",
+          "implementation_id": "api-update-task",
+          "name": "Server Error During Update",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": false,
+                "description": "Any Description",
+                "title": "Any Title"
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "Old Description",
+                    "id": 123,
+                    "title": "Old Title"
+                  }
+                ],
+                "simulate_error": true
+              },
+              "task_id": 123
+            },
+            "then": {
+              "error": "Internal Server Error",
+              "status": 500
+            },
+            "when": "updateTask is called and backend simulates HTTP 500"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Test when the network is unavailable and fetch fails. Function should throw.",
+          "id": "updateTask_network_failure",
+          "implementation_id": "api-update-task",
+          "name": "Network Failure During Update",
+          "test_setup": {
+            "given": {
+              "network": "offline",
+              "request_body_json": {
+                "completed": false,
+                "description": "Any Description",
+                "title": "Any Title"
+              },
+              "task_id": 123
+            },
+            "then": {
+              "error": "Network request failed"
+            },
+            "when": "updateTask is called when network is offline"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Test updating a task with an empty request body. Backend returns HTTP 400.",
+          "id": "updateTask_empty_update_data",
+          "implementation_id": "api-update-task",
+          "name": "Empty Update Data",
+          "test_setup": {
+            "given": {
+              "request_body_json": {},
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "Old Description",
+                    "id": 123,
+                    "title": "Old Title"
+                  }
+                ]
+              },
+              "task_id": 123
+            },
+            "then": {
+              "error": "Invalid request body",
+              "status": 400
+            },
+            "when": "updateTask is called with empty request body"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Test updating a task with a very large title and description. Should succeed if backend accepts.",
+          "id": "updateTask_large_payload",
+          "implementation_id": "api-update-task",
+          "name": "Large Payload Update",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": true,
+                "description": "T.repeat(8192)",
+                "title": "T.repeat(1024)"
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "Small",
+                    "id": 124,
+                    "title": "Small"
+                  }
+                ]
+              },
+              "task_id": 124
+            },
+            "then": {
+              "response_body_json": {
+                "completed": true,
+                "description": "T.repeat(8192)",
+                "id": 124,
+                "title": "T.repeat(1024)"
+              },
+              "status": 200
+            },
+            "when": "updateTask is called with large payload"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Test updating a task where the ID is passed as a string instead of a number. Should succeed if backend accepts.",
+          "id": "updateTask_id_as_string",
+          "implementation_id": "api-update-task",
+          "name": "Task ID as String",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": false,
+                "description": "String ID Description",
+                "title": "String ID Title"
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": true,
+                    "description": "Old Description",
+                    "id": 123,
+                    "title": "Old Title"
+                  }
+                ]
+              },
+              "task_id": "123"
+            },
+            "then": {
+              "response_body_json": {
+                "completed": false,
+                "description": "String ID Description",
+                "id": 123,
+                "title": "String ID Title"
+              },
+              "status": 200
+            },
+            "when": "updateTask is called with task_id as string"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Test updating only the completed field of a task.",
+          "id": "updateTask_boolean_fields_only",
+          "implementation_id": "api-update-task",
+          "name": "Update Completed Field Only",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": true
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "Keep Description",
+                    "id": 125,
+                    "title": "Keep Title"
+                  }
+                ]
+              },
+              "task_id": 125
+            },
+            "then": {
+              "response_body_json": {
+                "completed": true,
+                "description": "Keep Description",
+                "id": 125,
+                "title": "Keep Title"
+              },
+              "status": 200
+            },
+            "when": "updateTask is called with only completed field"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Test updating a task with the same data as it already has. Should succeed with unchanged data.",
+          "id": "updateTask_no_changes",
+          "implementation_id": "api-update-task",
+          "name": "No Changes Update",
+          "test_setup": {
+            "given": {
+              "request_body_json": {
+                "completed": false,
+                "description": "No Change",
+                "title": "No Change"
+              },
+              "server_state": {
+                "existing_tasks": [
+                  {
+                    "completed": false,
+                    "description": "No Change",
+                    "id": 126,
+                    "title": "No Change"
+                  }
+                ]
+              },
+              "task_id": 126
+            },
+            "then": {
+              "response_body_json": {
+                "completed": false,
+                "description": "No Change",
+                "id": 126,
+                "title": "No Change"
+              },
+              "status": 200
+            },
+            "when": "updateTask is called with identical data"
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "backend-update-task-storage",
+      "test_cases": [
+        {
+          "description": "Successfully updates an existing task with valid data.",
+          "id": "tc_update_existing_task_success",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_existing_task_success",
+          "test_setup": {
+            "given": "A task list containing a task with id=1 and valid update data for that task.",
+            "then": "Returns the updated task object with id=1 and the new data; persistent storage is updated.",
+            "when": "update_task(task_id=1, updated_data={\"title\": \"Updated Title\", \"completed\": true}) is called."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempts to update a task with an id that does not exist in storage.",
+          "id": "tc_update_nonexistent_task",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_nonexistent_task",
+          "test_setup": {
+            "given": "A task list with tasks, none of which have id=999.",
+            "then": "Returns None, and no changes are made to persistent storage.",
+            "when": "update_task(task_id=999, updated_data={\"title\": \"Ghost Task\", \"completed\": false}) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task when there are no tasks in storage.",
+          "id": "tc_update_task_empty_task_list",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_empty_task_list",
+          "test_setup": {
+            "given": "An empty task list (no tasks in persistent storage).",
+            "then": "Returns None, as there is nothing to update.",
+            "when": "update_task(task_id=1, updated_data={\"title\": \"No Task\", \"completed\": false}) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to update a task with a non-integer id (string or None).",
+          "id": "tc_update_task_invalid_id_type",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_invalid_id_type",
+          "test_setup": {
+            "given": "A task list containing tasks with integer ids.",
+            "then": "Returns None or raises a TypeError, depending on implementation.",
+            "when": "update_task(task_id=\"abc\", updated_data={\"title\": \"Invalid ID\", \"completed\": false}) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Updates only some fields of an existing task, leaving others unchanged.",
+          "id": "tc_update_task_partial_update",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_partial_update",
+          "test_setup": {
+            "given": "A task list with a task id=2, which has fields 'title', 'description', and 'completed'.",
+            "then": "Returns the task with id=2, with 'completed' updated and other fields unchanged.",
+            "when": "update_task(task_id=2, updated_data={\"completed\": true}) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to update a task with data missing required fields.",
+          "id": "tc_update_task_missing_required_fields",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_missing_required_fields",
+          "test_setup": {
+            "given": "A task list with a task id=3. The update data omits required fields (e.g., only provides 'foo': 'bar').",
+            "then": "Returns None or raises a validation error, depending on implementation.",
+            "when": "update_task(task_id=3, updated_data={\"foo\": \"bar\"}) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task and the updated data includes a different id value.",
+          "id": "tc_update_task_duplicate_id_in_update_data",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_duplicate_id_in_update_data",
+          "test_setup": {
+            "given": "A task list with a task id=4. The update data includes a different id (e.g., id=5).",
+            "then": "Returns None or ignores the id in updated_data and updates the task with id=4 only.",
+            "when": "update_task(task_id=4, updated_data={\"id\": 5, \"title\": \"Conflicting ID\"}) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task with the same data it already has.",
+          "id": "tc_update_task_no_changes",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_no_changes",
+          "test_setup": {
+            "given": "A task list with a task id=5, and update data identical to its current data.",
+            "then": "Returns the task object unchanged; persistent storage may or may not be rewritten depending on implementation.",
+            "when": "update_task(task_id=5, updated_data={\"title\": \"Same Title\", \"completed\": false}) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Updates a task with a large amount of data in its fields.",
+          "id": "tc_update_task_large_data",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_large_data",
+          "test_setup": {
+            "given": "A task list with a task id=6. Update data includes a very large string for 'description'.",
+            "then": "Returns the updated task object with the large description; persistent storage is updated without error.",
+            "when": "update_task(task_id=6, updated_data={\"description\": \"T.repeat(10000)\"}) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Simulates a failure when attempting to write the updated tasks to persistent storage.",
+          "id": "tc_update_task_storage_write_failure",
+          "implementation_id": "backend-update-task-storage",
+          "name": "update_task_storage_write_failure",
+          "test_setup": {
+            "given": "A task list with a task id=7. The persistent storage is unavailable or read-only.",
+            "then": "Returns None or raises an IOError; the task is not updated.",
+            "when": "update_task(task_id=7, updated_data={\"title\": \"Will Fail\"}) is called."
+          },
+          "type": "negative"
+        }
+      ]
+    },
+    {
+      "implementation_id": "App_handleDeleteTask",
+      "test_cases": [
+        {
+          "description": "Verifies that when API call succeeds, the task is removed from state and no error is shown.",
+          "id": "handleDeleteTask_successful_deletion",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "Successful task deletion",
+          "test_setup": {
+            "given": "A task with id '123' exists in tasks state. API deleteTask('123') will resolve successfully.",
+            "then": "Task with id '123' is removed from tasks state. No alert or error message is shown.",
+            "when": "handleDeleteTask('123') is called."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Tests deletion of a task id that does not exist in the local state.",
+          "id": "handleDeleteTask_nonexistent_id",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "Delete non-existent task",
+          "test_setup": {
+            "given": "No task with id '999' exists in tasks state. API deleteTask('999') will resolve successfully.",
+            "then": "No change in tasks state. No error or alert is shown.",
+            "when": "handleDeleteTask('999') is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensures that if the API call fails, the task is not removed from state and the user is alerted.",
+          "id": "handleDeleteTask_api_failure",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "API failure on deletion",
+          "test_setup": {
+            "given": "A task with id '456' exists in tasks state. API deleteTask('456') will reject with an error.",
+            "then": "Task with id '456' remains in tasks state. User is alerted of the failure.",
+            "when": "handleDeleteTask('456') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Checks behavior when attempting to delete a task from an empty tasks state.",
+          "id": "handleDeleteTask_empty_state",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "Delete from empty state",
+          "test_setup": {
+            "given": "tasks state is an empty array. API deleteTask('101') will resolve successfully.",
+            "then": "tasks state remains empty. No error or alert is shown.",
+            "when": "handleDeleteTask('101') is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests behavior when a non-string/non-number id is passed.",
+          "id": "handleDeleteTask_invalid_id_type",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "Delete with invalid id type",
+          "test_setup": {
+            "given": "A task with id '123' exists in state. API deleteTask(undefined) will reject with an error.",
+            "then": "tasks state remains unchanged. User is alerted of the failure.",
+            "when": "handleDeleteTask(undefined) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests deleting the same task more than once, ensuring idempotency.",
+          "id": "handleDeleteTask_multiple_deletions",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "Delete the same task multiple times",
+          "test_setup": {
+            "given": "A task with id '789' exists in tasks state. API deleteTask('789') will resolve on the first call, and resolve or reject on subsequent calls.",
+            "then": "After first call, task is removed. Second call results in no change to state and no error if API resolves, or user is alerted if API rejects.",
+            "when": "handleDeleteTask('789') is called twice in succession."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Checks behavior when the API call times out or never resolves.",
+          "id": "handleDeleteTask_api_timeout",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "API timeout on deletion",
+          "test_setup": {
+            "given": "A task with id '321' exists in tasks state. API deleteTask('321') never resolves (timeout).",
+            "then": "Task with id '321' remains in tasks state. User may eventually be alerted depending on error handling timeout implementation.",
+            "when": "handleDeleteTask('321') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Simulates a failure in the state update logic after API reports success.",
+          "id": "handleDeleteTask_state_sync_error",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "State update fails after API success",
+          "test_setup": {
+            "given": "A task with id '654' exists in tasks state. API deleteTask('654') resolves, but remove task from state throws an exception.",
+            "then": "User is alerted of the failure. Task may or may not be removed from state depending on error handling.",
+            "when": "handleDeleteTask('654') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Checks handling of a null id argument.",
+          "id": "handleDeleteTask_null_id",
+          "implementation_id": "App_handleDeleteTask",
+          "name": "Delete with null id",
+          "test_setup": {
+            "given": "tasks state contains some tasks. API deleteTask(null) will reject with an error.",
+            "then": "tasks state remains unchanged. User is alerted of the failure.",
+            "when": "handleDeleteTask(null) is called."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "api_deleteTask",
+      "test_cases": [
+        {
+          "description": "Verify that deleting a task with a valid existing ID succeeds and no error is thrown.",
+          "id": "delete_task_success_valid_id",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with valid ID - Success",
+          "test_setup": {
+            "given": "Task with ID 123 exists in the backend.",
+            "then": "Task with ID 123 is deleted. No error is thrown. HTTP response is OK.",
+            "when": "api.deleteTask(123) is called."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verify that attempting to delete a task with a non-existent ID results in an error.",
+          "id": "delete_task_non_existent_id",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with non-existent ID - Error",
+          "test_setup": {
+            "given": "Task with ID 999 does not exist in the backend.",
+            "then": "An error is thrown indicating task not found. HTTP response is not OK.",
+            "when": "api.deleteTask(999) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that passing an invalid ID type (e.g., string instead of number) results in an error.",
+          "id": "delete_task_invalid_id_type",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with invalid ID type - Error",
+          "test_setup": {
+            "given": "ID parameter is a string 'abc' instead of a valid numeric or UUID identifier.",
+            "then": "An error is thrown due to invalid ID format. HTTP response is not OK.",
+            "when": "api.deleteTask('abc') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that passing null as the ID throws an error.",
+          "id": "delete_task_null_id",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with null ID - Error",
+          "test_setup": {
+            "given": "ID parameter is null.",
+            "then": "An error is thrown due to missing or invalid ID. HTTP response is not OK.",
+            "when": "api.deleteTask(null) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that passing an empty string as the ID throws an error.",
+          "id": "delete_task_empty_id",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with empty ID - Error",
+          "test_setup": {
+            "given": "ID parameter is an empty string ''.",
+            "then": "An error is thrown due to missing or invalid ID. HTTP response is not OK.",
+            "when": "api.deleteTask('') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify behavior when deleting a task with the minimum possible ID value.",
+          "id": "delete_task_boundary_min_id",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with minimum boundary ID - Success or Error",
+          "test_setup": {
+            "given": "Task with ID 0 exists (or not).",
+            "then": "If task exists, it is deleted successfully. If not, an error is thrown.",
+            "when": "api.deleteTask(0) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verify behavior when deleting a task with the maximum possible ID value.",
+          "id": "delete_task_boundary_max_id",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with maximum boundary ID - Success or Error",
+          "test_setup": {
+            "given": "Task with ID 2147483647 exists (or not).",
+            "then": "If task exists, it is deleted successfully. If not, an error is thrown.",
+            "when": "api.deleteTask(2147483647) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verify that an error is thrown when the backend returns a 500 Internal Server Error.",
+          "id": "delete_task_backend_error",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task when backend returns server error",
+          "test_setup": {
+            "given": "Backend is configured to return HTTP 500 for DELETE /tasks/{id}.",
+            "then": "An error is thrown indicating server error. HTTP response is not OK.",
+            "when": "api.deleteTask(123) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that an error is thrown when the DELETE request cannot reach the backend (network failure).",
+          "id": "delete_task_network_failure",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with network failure",
+          "test_setup": {
+            "given": "Network connection to backend is unavailable.",
+            "then": "An error is thrown due to network failure.",
+            "when": "api.deleteTask(123) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that an error is thrown when the backend returns HTTP 403 Forbidden.",
+          "id": "delete_task_permission_denied",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with permission denied",
+          "test_setup": {
+            "given": "User does not have permission to delete task with ID 123.",
+            "then": "An error is thrown indicating permission denied. HTTP response is not OK.",
+            "when": "api.deleteTask(123) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that deleting a task which was already deleted results in an error.",
+          "id": "delete_task_already_deleted",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task that was already deleted",
+          "test_setup": {
+            "given": "Task with ID 123 was previously deleted and no longer exists.",
+            "then": "An error is thrown indicating task not found. HTTP response is not OK.",
+            "when": "api.deleteTask(123) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that deleting a task with a UUID as ID succeeds if valid.",
+          "id": "delete_task_id_as_uuid",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with UUID ID",
+          "test_setup": {
+            "given": "Task with ID '550e8400-e29b-41d4-a716-446655440000' exists.",
+            "then": "Task is deleted successfully. No error is thrown. HTTP response is OK.",
+            "when": "api.deleteTask('550e8400-e29b-41d4-a716-446655440000') is called."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verify that deleting a task with an invalid UUID format as ID results in an error.",
+          "id": "delete_task_id_as_uuid_invalid",
+          "implementation_id": "api_deleteTask",
+          "name": "Delete task with invalid UUID ID",
+          "test_setup": {
+            "given": "ID parameter is 'not-a-valid-uuid'.",
+            "then": "An error is thrown due to invalid ID format. HTTP response is not OK.",
+            "when": "api.deleteTask('not-a-valid-uuid') is called."
+          },
+          "type": "negative"
+        }
+      ]
+    },
+    {
+      "implementation_id": "database_delete_task",
+      "test_cases": [
+        {
+          "description": "Successfully deletes a task that exists in the database.",
+          "id": "TC01_delete_existing_task",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Existing Task",
+          "test_setup": {
+            "given": "A task with task_id '123' exists in the database.",
+            "then": "The function returns True. Task '123' is no longer present in the database.",
+            "when": "delete_task('123') is called."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempts to delete a task that does not exist and expects failure.",
+          "id": "TC02_delete_nonexistent_task",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Nonexistent Task",
+          "test_setup": {
+            "given": "No task with task_id '999' exists in the database.",
+            "then": "The function returns False. Database remains unchanged.",
+            "when": "delete_task('999') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task when the database is empty.",
+          "id": "TC03_delete_task_empty_database",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task from Empty Database",
+          "test_setup": {
+            "given": "The database contains no tasks (empty list).",
+            "then": "The function returns False. Database remains unchanged.",
+            "when": "delete_task('101') is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task using a null (None) task_id.",
+          "id": "TC04_delete_task_with_null_id",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task with Null Task ID",
+          "test_setup": {
+            "given": "The database contains tasks, but no task with task_id None.",
+            "then": "The function returns False. Database remains unchanged.",
+            "when": "delete_task(None) is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task using a task_id that contains special characters.",
+          "id": "TC05_delete_task_with_special_characters",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task with Special Character Task ID",
+          "test_setup": {
+            "given": "The database contains tasks with regular task_ids. No task with task_id '!@#$$%' exists.",
+            "then": "The function returns False. Database remains unchanged.",
+            "when": "delete_task('!@#$$%') is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task when multiple tasks have the same task_id; only one is deleted.",
+          "id": "TC06_delete_task_multiple_tasks_same_id",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task with Duplicate Task IDs",
+          "test_setup": {
+            "given": "The database contains two tasks with task_id 'dup123'.",
+            "then": "The function returns True. Only one of the tasks with task_id 'dup123' is removed.",
+            "when": "delete_task('dup123') is called."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task using a task_id of incorrect type (e.g., list or dict).",
+          "id": "TC07_delete_task_invalid_id_type",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task with Invalid Task ID Type",
+          "test_setup": {
+            "given": "The database contains tasks with string or integer task_ids.",
+            "then": "The function returns False. Database remains unchanged.",
+            "when": "delete_task(['invalid']) is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task that has already been deleted.",
+          "id": "TC08_delete_task_after_deletion",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task Twice",
+          "test_setup": {
+            "given": "A task with task_id 'del_once' exists and is deleted successfully.",
+            "then": "The function returns False. Database remains unchanged.",
+            "when": "delete_task('del_once') is called again."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task when the database is corrupted or unreadable.",
+          "id": "TC09_delete_task_database_corrupted",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task with Corrupted Database",
+          "test_setup": {
+            "given": "Database is corrupted and get_tasks() raises an exception.",
+            "then": "The function handles the exception and returns False or raises an error (as per implementation).",
+            "when": "delete_task('201') is called."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task with task_id '0', testing boundary condition for numeric IDs.",
+          "id": "TC10_delete_task_id_zero",
+          "implementation_id": "database_delete_task",
+          "name": "Delete Task with Task ID Zero",
+          "test_setup": {
+            "given": "The database contains a task with task_id 0.",
+            "then": "The function returns True. Task with task_id 0 is removed.",
+            "when": "delete_task(0) is called."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "api_updateTask_toggle_status",
+      "test_cases": [
+        {
+          "description": "Successfully updates an existing task's completed status to true.",
+          "id": "updateTask_positive_completed_true",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Update task completed status to true",
+          "test_setup": {
+            "given": {
+              "id": "123",
+              "taskData": {
+                "completed": true,
+                "description": "Get 2 liters",
+                "title": "Buy milk"
+              }
+            },
+            "then": {
+              "returns": {
+                "completed": true,
+                "description": "Get 2 liters",
+                "id": "123",
+                "title": "Buy milk"
+              }
+            },
+            "when": "api.updateTask is called with the task ID and updated data."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Successfully updates an existing task's completed status to false.",
+          "id": "updateTask_positive_completed_false",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Update task completed status to false",
+          "test_setup": {
+            "given": {
+              "id": "456",
+              "taskData": {
+                "completed": false,
+                "description": "Finish chapter 4",
+                "title": "Read book"
+              }
+            },
+            "then": {
+              "returns": {
+                "completed": false,
+                "description": "Finish chapter 4",
+                "id": "456",
+                "title": "Read book"
+              }
+            },
+            "when": "api.updateTask is called with the task ID and updated data."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Throws an error when attempting to update a task with a non-existent ID.",
+          "id": "updateTask_negative_invalid_id",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Attempt to update task with invalid ID",
+          "test_setup": {
+            "given": {
+              "id": "nonexistent_id",
+              "taskData": {
+                "completed": true,
+                "description": "This will fail",
+                "title": "Non-existent"
+              }
+            },
+            "then": {
+              "throws": "Task not found error"
+            },
+            "when": "api.updateTask is called with an invalid task ID."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Throws an error when the completed field is missing in the taskData.",
+          "id": "updateTask_negative_missing_completed",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Attempt to update task with missing completed status",
+          "test_setup": {
+            "given": {
+              "id": "789",
+              "taskData": {
+                "description": "Morning exercise",
+                "title": "Go running"
+              }
+            },
+            "then": {
+              "throws": "Invalid request: completed field required"
+            },
+            "when": "api.updateTask is called without the completed field."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Throws an error when the completed field is not a boolean.",
+          "id": "updateTask_negative_invalid_completed_type",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Attempt to update task with non-boolean completed status",
+          "test_setup": {
+            "given": {
+              "id": "321",
+              "taskData": {
+                "completed": "yes",
+                "description": "Completed is a string",
+                "title": "Test invalid type"
+              }
+            },
+            "then": {
+              "throws": "Invalid request: completed must be a boolean"
+            },
+            "when": "api.updateTask is called with completed set to a non-boolean value."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests updating a task with an empty title string.",
+          "id": "updateTask_edge_empty_title",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Update task with empty title",
+          "test_setup": {
+            "given": {
+              "id": "654",
+              "taskData": {
+                "completed": true,
+                "description": "No title",
+                "title": ""
+              }
+            },
+            "then": {
+              "returns": {
+                "completed": true,
+                "description": "No title",
+                "id": "654",
+                "title": ""
+              }
+            },
+            "when": "api.updateTask is called with an empty string for title."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests updating a task with a title at the maximum allowed length.",
+          "id": "updateTask_edge_long_title",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Update task with maximum length title",
+          "test_setup": {
+            "given": {
+              "id": "987",
+              "taskData": {
+                "completed": false,
+                "description": "Long title",
+                "title": "T.repeat(255)"
+              }
+            },
+            "then": {
+              "returns": {
+                "completed": false,
+                "description": "Long title",
+                "id": "987",
+                "title": "T.repeat(255)"
+              }
+            },
+            "when": "api.updateTask is called with a 255-character title."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Throws an error when the backend returns a 500 Internal Server Error.",
+          "id": "updateTask_negative_server_error",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Server error during update",
+          "test_setup": {
+            "given": {
+              "id": "111",
+              "taskData": {
+                "completed": true,
+                "description": "Cause backend failure",
+                "title": "Server error test"
+              }
+            },
+            "then": {
+              "throws": "Internal Server Error"
+            },
+            "when": "api.updateTask is called and the backend responds with a server error."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Throws an error if a network failure occurs during the PUT request.",
+          "id": "updateTask_negative_network_failure",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Network failure during update",
+          "test_setup": {
+            "given": {
+              "id": "222",
+              "taskData": {
+                "completed": false,
+                "description": "Simulate offline",
+                "title": "Network fail"
+              }
+            },
+            "then": {
+              "throws": "Network Error"
+            },
+            "when": "api.updateTask is called while the network is unavailable."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Tests updating a task where the description is omitted or empty.",
+          "id": "updateTask_edge_no_description",
+          "implementation_id": "api_updateTask_toggle_status",
+          "name": "Update task with no description",
+          "test_setup": {
+            "given": {
+              "id": "333",
+              "taskData": {
+                "completed": true,
+                "title": "No description"
+              }
+            },
+            "then": {
+              "returns": {
+                "completed": true,
+                "description": "",
+                "id": "333",
+                "title": "No description"
+              }
+            },
+            "when": "api.updateTask is called with no description field."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "database_update_task_status",
+      "test_cases": [
+        {
+          "description": "Successfully updates an existing task's completed status and other fields in storage.",
+          "id": "TC1_update_existing_task_success",
+          "implementation_id": "database_update_task_status",
+          "name": "update_existing_task_success",
+          "test_setup": {
+            "given": "A storage file (tasks.json) contains a task with id=1 and completed=false.",
+            "then": "The returned task matches the updated task, and tasks.json is updated accordingly.",
+            "when": "update_task(1, {\"id\": 1, \"title\": \"Updated Title\", \"completed\": true}) is called"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempts to update a task that does not exist in storage; should return None.",
+          "id": "TC2_update_nonexistent_task_returns_none",
+          "implementation_id": "database_update_task_status",
+          "name": "update_nonexistent_task_returns_none",
+          "test_setup": {
+            "given": "tasks.json contains tasks without id=99.",
+            "then": "The function returns None and tasks.json remains unchanged.",
+            "when": "update_task(99, {\"id\": 99, \"title\": \"Ghost Task\", \"completed\": true}) is called"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task when storage is empty.",
+          "id": "TC3_update_task_storage_empty",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_storage_empty",
+          "test_setup": {
+            "given": "tasks.json is empty or contains an empty list.",
+            "then": "The function returns None and tasks.json remains empty.",
+            "when": "update_task(1, {\"id\": 1, \"title\": \"New Task\", \"completed\": false}) is called"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Updates only the 'completed' field of an existing task, leaving other fields unchanged.",
+          "id": "TC4_update_task_only_completed_field",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_only_completed_field",
+          "test_setup": {
+            "given": "tasks.json contains a task {\"id\": 5, \"title\": \"Sample\", \"completed\": false}.",
+            "then": "The returned task has completed=true and other fields unchanged. tasks.json is updated accordingly.",
+            "when": "update_task(5, {\"id\": 5, \"title\": \"Sample\", \"completed\": true}) is called"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Handles a task_update input missing required fields.",
+          "id": "TC5_update_task_invalid_task_update_structure",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_invalid_task_update_structure",
+          "test_setup": {
+            "given": "tasks.json contains a task with id=2.",
+            "then": "The function returns the task with the missing field as provided (since pseudo code doesn't validate), or raises an error if validation is implemented.",
+            "when": "update_task(2, {\"title\": \"No ID\", \"completed\": true}) is called"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task with an update payload whose id does not match the target id.",
+          "id": "TC6_update_task_with_duplicate_id_in_update",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_with_duplicate_id_in_update",
+          "test_setup": {
+            "given": "tasks.json contains a task with id=3.",
+            "then": "The function replaces the task at id=3 with the update (id=99) per pseudo code, potentially creating id inconsistency.",
+            "when": "update_task(3, {\"id\": 99, \"title\": \"Mismatch\", \"completed\": true}) is called"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Updates a task with a large payload to test performance and storage.",
+          "id": "TC7_update_task_with_large_payload",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_with_large_payload",
+          "test_setup": {
+            "given": "tasks.json contains a task with id=10. The update payload has a very long title (e.g., 10,000 characters).",
+            "then": "The function returns the updated task with the large title and tasks.json reflects the update.",
+            "when": "update_task(10, {\"id\": 10, \"title\": \"Very long title...\", \"completed\": false}) is called"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to update a task using an invalid task_id type (e.g., string instead of integer).",
+          "id": "TC8_update_task_with_invalid_task_id_type",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_with_invalid_task_id_type",
+          "test_setup": {
+            "given": "tasks.json contains a task with id=4.",
+            "then": "The function returns None or raises a TypeError, depending on implementation.",
+            "when": "update_task(\"four\", {\"id\": 4, \"title\": \"Test\", \"completed\": false}) is called"
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Handles the case where the tasks.json storage file does not exist.",
+          "id": "TC9_update_task_with_missing_storage_file",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_with_missing_storage_file",
+          "test_setup": {
+            "given": "tasks.json file does not exist.",
+            "then": "The function raises a FileNotFoundError or returns None, depending on implementation.",
+            "when": "update_task(1, {\"id\": 1, \"title\": \"New\", \"completed\": true}) is called"
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Handles the case where the storage file exists but contains invalid JSON.",
+          "id": "TC10_update_task_with_corrupted_storage_file",
+          "implementation_id": "database_update_task_status",
+          "name": "update_task_with_corrupted_storage_file",
+          "test_setup": {
+            "given": "tasks.json contains malformed JSON.",
+            "then": "The function raises a JSONDecodeError or equivalent error.",
+            "when": "update_task(1, {\"id\": 1, \"title\": \"Test\", \"completed\": false}) is called"
+          },
+          "type": "negative"
+        }
+      ]
+    }
+  ],
+  "component": [
+    {
+      "implementation_id": "TaskForm-component",
+      "test_cases": [
+        {
+          "description": "Verify that the TaskForm renders all fields: title, description, priority, category, due date.",
+          "id": "TC1_render_form_fields",
+          "implementation_id": "TaskForm-component",
+          "name": "Render all form fields",
+          "test_setup": {
+            "given": "TaskForm component is mounted with default props.",
+            "then": "All form fields (title, description, priority, category, due date) are present in the DOM.",
+            "when": "The component is rendered."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensure that submitting the form without a title triggers validation and prevents submission.",
+          "id": "TC2_required_title_validation",
+          "implementation_id": "TaskForm-component",
+          "name": "Required title field validation",
+          "test_setup": {
+            "given": "TaskForm is rendered and all fields except title are filled.",
+            "then": "Validation error for title is shown; onSubmit is not called.",
+            "when": "User submits the form."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verify that submitting the form with all fields filled correctly calls onSubmit with the input data.",
+          "id": "TC3_successful_form_submission",
+          "implementation_id": "TaskForm-component",
+          "name": "Successful form submission with valid data",
+          "test_setup": {
+            "given": "TaskForm is rendered; all fields are filled with valid values.",
+            "then": "onSubmit is called with entered task details.",
+            "when": "User submits the form."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Check that the form can be submitted when only the title is filled and optional fields are empty.",
+          "id": "TC4_empty_optional_fields_submission",
+          "implementation_id": "TaskForm-component",
+          "name": "Form submission with optional fields empty",
+          "test_setup": {
+            "given": "TaskForm is rendered; only title is filled.",
+            "then": "onSubmit is called with title and other fields as empty/null/default.",
+            "when": "User submits the form."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Test that changing the priority field updates the form state.",
+          "id": "TC5_priority_field_change",
+          "implementation_id": "TaskForm-component",
+          "name": "Priority field state change",
+          "test_setup": {
+            "given": "TaskForm is rendered.",
+            "then": "Priority field value in form state reflects the user's selection.",
+            "when": "User selects a value for the priority field."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Test that entering a past due date is accepted or handled as per requirements.",
+          "id": "TC6_due_date_edge_value",
+          "implementation_id": "TaskForm-component",
+          "name": "Due date edge case: past date",
+          "test_setup": {
+            "given": "TaskForm is rendered; all fields filled, due date set to a past date.",
+            "then": "onSubmit is called with the past due date (unless there is additional validation).",
+            "when": "User submits the form."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verify that selecting a category updates the form state.",
+          "id": "TC7_category_field_change",
+          "implementation_id": "TaskForm-component",
+          "name": "Category field state change",
+          "test_setup": {
+            "given": "TaskForm is rendered.",
+            "then": "Category field value in form state reflects the user's selection.",
+            "when": "User selects a category."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Check that title field accepts input at its maximum allowed length.",
+          "id": "TC8_title_field_max_length",
+          "implementation_id": "TaskForm-component",
+          "name": "Title field with maximum length input",
+          "test_setup": {
+            "given": "TaskForm is rendered; title field filled with maximum length string.",
+            "then": "onSubmit is called with the max length title; no validation error.",
+            "when": "User submits the form."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensure that the form can be submitted when description is empty.",
+          "id": "TC9_description_empty_input",
+          "implementation_id": "TaskForm-component",
+          "name": "Description field empty",
+          "test_setup": {
+            "given": "TaskForm is rendered; title is filled, description left empty.",
+            "then": "onSubmit is called; description is empty.",
+            "when": "User submits the form."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Check if entering an invalid due date format triggers any error or is gracefully handled.",
+          "id": "TC10_invalid_due_date_format",
+          "implementation_id": "TaskForm-component",
+          "name": "Due date invalid format",
+          "test_setup": {
+            "given": "TaskForm is rendered; due date input set to invalid format.",
+            "then": "If validated, error message shown; if not, onSubmit called with the invalid value.",
+            "when": "User submits the form."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Test that the form fields are cleared/reset after successful submission if required.",
+          "id": "TC11_clear_form_fields",
+          "implementation_id": "TaskForm-component",
+          "name": "Clear form fields after submission",
+          "test_setup": {
+            "given": "TaskForm is rendered; all fields filled; onSubmit called.",
+            "then": "Form fields are reset/cleared after submission (if implemented).",
+            "when": "User submits the form."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verify that an error message is visible when required field (title) validation fails.",
+          "id": "TC12_error_message_display",
+          "implementation_id": "TaskForm-component",
+          "name": "Display error message for missing required field",
+          "test_setup": {
+            "given": "TaskForm is rendered; title left empty.",
+            "then": "Error message for title is displayed in the UI.",
+            "when": "User submits the form."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Ensure the form can be submitted multiple times with different values and that onSubmit is called each time.",
+          "id": "TC13_multiple_submissions",
+          "implementation_id": "TaskForm-component",
+          "name": "Multiple form submissions",
+          "test_setup": {
+            "given": "TaskForm is rendered.",
+            "then": "onSubmit is called each time with the corresponding values.",
+            "when": "User submits the form multiple times with different input values."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Check that fields accept special characters and submission is successful.",
+          "id": "TC14_special_characters_in_fields",
+          "implementation_id": "TaskForm-component",
+          "name": "Special characters input in fields",
+          "test_setup": {
+            "given": "TaskForm is rendered; fields filled with special characters.",
+            "then": "onSubmit is called with special character values; no validation error.",
+            "when": "User submits the form."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "ui-task-edit-form",
+      "test_cases": [
+        {
+          "description": "Ensures that when the component receives an initialTask prop, all form fields are pre-filled with the task's values.",
+          "id": "tf_render_initial_values",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Render with initialTask populates fields",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask containing title, description, priority, category, and due date.",
+            "then": "Form fields display initialTask's title, description, priority, category, and due date values.",
+            "when": "Component mounts"
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verifies that submitting the form with valid and changed data calls onSubmit with the updated task data.",
+          "id": "tf_submit_valid_form",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Submit valid edited task",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask and onSubmit mock function.",
+            "then": "onSubmit is called once with the updated task data reflecting all changes.",
+            "when": "User edits fields (e.g., changes title and due date) and submits the form."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Checks that clicking the cancel button invokes the onCancel callback.",
+          "id": "tf_cancel_form",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Cancel editing triggers onCancel",
+          "test_setup": {
+            "given": "TaskForm is rendered with onCancel mock function.",
+            "then": "onCancel is called exactly once.",
+            "when": "User clicks the cancel button."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensures the form shows a validation error and does not submit when the title field is empty.",
+          "id": "tf_validate_required_title_missing",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Validation error when title is missing",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask. User clears the title input field.",
+            "then": "Validation error is shown for the title field and onSubmit is not called.",
+            "when": "User submits the form."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Checks that submitting a title that exceeds allowed length triggers validation error and prevents submission.",
+          "id": "tf_validate_title_max_length",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Title exceeds maximum length",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask. User enters a title string longer than the maximum allowed (e.g., 256 characters).",
+            "then": "Validation error is displayed for title length and onSubmit is not called.",
+            "when": "User submits the form."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Checks that setting a due date in the past (if not allowed) triggers validation error and prevents submission.",
+          "id": "tf_edit_due_date_past",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Due date set in the past",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask. User sets due date to a date before today.",
+            "then": "Validation error is shown for due date and onSubmit is not called.",
+            "when": "User submits the form."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verifies that changing priority and category selections updates the form state and is reflected in onSubmit.",
+          "id": "tf_edit_priority_and_category",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Edit priority and category fields",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask and onSubmit mock function.",
+            "then": "onSubmit is called with updated priority and category values.",
+            "when": "User selects a different priority and category and submits the form."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensures that when no initialTask is provided, all form fields are empty or at their default values.",
+          "id": "tf_no_initial_task",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Render with no initialTask",
+          "test_setup": {
+            "given": "TaskForm is rendered with no initialTask.",
+            "then": "All form fields are empty or set to their default values.",
+            "when": "Component mounts."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Checks that submitting the form without making any changes still calls onSubmit with the original task data.",
+          "id": "tf_submit_unchanged_task",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Submit form with unchanged values",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask and onSubmit mock.",
+            "then": "onSubmit is called with the same data as initialTask.",
+            "when": "User submits the form without changing any field."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verifies that if description is optional, submitting with an empty description does not trigger validation error and onSubmit is called.",
+          "id": "tf_edit_description_empty",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Submit with empty description (if optional)",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask. User clears the description input.",
+            "then": "onSubmit is called with description as empty string (if description is optional).",
+            "when": "User submits the form."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Checks that if description is required, submitting with an empty description triggers a validation error.",
+          "id": "tf_edit_description_required",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Submit with empty description (if required)",
+          "test_setup": {
+            "given": "TaskForm is rendered with initialTask. User clears the description input.",
+            "then": "Validation error is shown for description and onSubmit is not called (if description is required).",
+            "when": "User submits the form."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Ensures the form does not submit multiple times if user clicks submit repeatedly while an async edit is in progress.",
+          "id": "tf_submit_while_pending",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Prevent multiple submissions while pending",
+          "test_setup": {
+            "given": "TaskForm is rendered and onSubmit returns a pending promise.",
+            "then": "onSubmit is called only once until the promise resolves.",
+            "when": "User clicks the submit button multiple times rapidly."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Checks that submitting the form with all fields filled and valid data succeeds and calls onSubmit with correct payload.",
+          "id": "tf_submit_with_all_fields",
+          "implementation_id": "ui-task-edit-form",
+          "name": "Submit with all fields filled",
+          "test_setup": {
+            "given": "TaskForm is rendered. User fills in all fields with valid values.",
+            "then": "onSubmit is called with all field values.",
+            "when": "User submits the form."
+          },
+          "type": "positive"
+        }
+      ]
+    },
+    {
+      "implementation_id": "ui-task-edit-trigger",
+      "test_cases": [
+        {
+          "description": "Ensures the component displays all the details of a given task correctly.",
+          "id": "render_task_details_positive",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Render Task Details",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid 'task' prop containing title, description, and due date.",
+            "then": "The UI displays the task's title, description, and due date as expected.",
+            "when": "The component is mounted."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verifies that clicking the 'Edit' button calls the 'onEdit' callback with the correct task object.",
+          "id": "edit_button_triggers_onEdit_positive",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Edit Button Triggers onEdit Callback",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid 'task' prop and a mock 'onEdit' function.",
+            "then": "'onEdit' is called one time with the correct 'task' object as argument.",
+            "when": "The user clicks the 'Edit' button."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Checks that the 'Edit' button is not rendered if the 'onEdit' prop is not provided.",
+          "id": "edit_button_not_rendered_negative",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Edit Button Not Rendered When onEdit Missing",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid 'task' prop but without 'onEdit' prop.",
+            "then": "No 'Edit' button is present in the UI.",
+            "when": "The component is mounted."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Checks if the 'Edit' button is disabled when the task is marked as read-only.",
+          "id": "edit_button_disabled_edge",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Edit Button Disabled for Read-Only Tasks",
+          "test_setup": {
+            "given": "TaskItem is rendered with a 'task' prop having a 'readOnly: true' property.",
+            "then": "The 'Edit' button is rendered but disabled/unresponsive.",
+            "when": "The component is mounted."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensures that the 'onEdit' callback is not called when the user interacts with other parts of the component except the 'Edit' button.",
+          "id": "onEdit_not_called_on_unrelated_action_negative",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "onEdit Not Called on Unrelated User Actions",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid 'task' prop and a mock 'onEdit' function.",
+            "then": "'onEdit' is not called.",
+            "when": "The user clicks anywhere except the 'Edit' button."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verifies that rendering multiple TaskItem components each displays their corresponding task and 'Edit' button.",
+          "id": "multiple_tasks_rendering_edge",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Rendering Multiple TaskItems",
+          "test_setup": {
+            "given": "A list of TaskItem components is rendered, each with a unique 'task' prop.",
+            "then": "Each task's details and 'Edit' button are displayed correctly and independently.",
+            "when": "The component tree is mounted."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensures that clicking the 'Edit' button for a specific task calls 'onEdit' with the correct task object in a list.",
+          "id": "onEdit_receives_correct_task_for_each_edge",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "onEdit Receives Correct Task for Each Item",
+          "test_setup": {
+            "given": "A list of TaskItem components is rendered with different 'task' props and a shared mock 'onEdit' function.",
+            "then": "'onEdit' is called with the correct task object matching the clicked TaskItem.",
+            "when": "User clicks the 'Edit' button for one specific task."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Tests component behavior when 'task' prop is null or undefined.",
+          "id": "null_task_prop_negative",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Null Task Prop Handling",
+          "test_setup": {
+            "given": "TaskItem is rendered with 'task' set to null.",
+            "then": "The component renders nothing or displays an appropriate error/fallback UI without crashing.",
+            "when": "The component is mounted."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Checks that the 'Edit' button is focusable and accessible via keyboard.",
+          "id": "edit_button_accessibility_edge",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Edit Button Accessibility",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid 'task' prop.",
+            "then": "The 'Edit' button is focusable and can be activated via keyboard events (e.g., Enter/Space).",
+            "when": "The user navigates to the 'Edit' button using the keyboard (e.g., Tab key)."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Validates that the 'Edit' button displays a loading state if the task is being edited (if applicable).",
+          "id": "edit_button_loading_state_edge",
+          "implementation_id": "ui-task-edit-trigger",
+          "name": "Edit Button Loading State",
+          "test_setup": {
+            "given": "TaskItem is rendered with a 'task' in an 'editing' state and a prop or context indicating loading.",
+            "then": "The 'Edit' button shows a loading indicator or is disabled until editing is complete.",
+            "when": "The component is mounted."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "TaskItem_handleDelete",
+      "test_cases": [
+        {
+          "description": "Ensures that when the delete button is clicked and the user confirms the deletion, the onDelete callback is called with the correct task id.",
+          "id": "TC_handleDelete_positive_confirmed",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Delete task after user confirmation",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid task prop (id: 1) and a mock onDelete function.",
+            "then": "onDelete is called once with the argument 1.",
+            "when": "User clicks the delete button and confirms the confirmation prompt."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensures that if the user cancels the deletion confirmation, the onDelete callback is not called.",
+          "id": "TC_handleDelete_negative_cancelled",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Cancel delete action",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid task prop (id: 1) and a mock onDelete function.",
+            "then": "onDelete is not called.",
+            "when": "User clicks the delete button and cancels the confirmation prompt."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Ensures the component does not throw errors if the onDelete prop is missing and delete is attempted.",
+          "id": "TC_handleDelete_edge_no_onDelete",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Component renders without onDelete",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid task prop (id: 1) and no onDelete function provided.",
+            "then": "No error is thrown and the application does not crash.",
+            "when": "User clicks the delete button and confirms the confirmation prompt."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensures the component handles cases where the task id is undefined or null.",
+          "id": "TC_handleDelete_edge_invalid_id",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Handle invalid task id",
+          "test_setup": {
+            "given": "TaskItem is rendered with a task prop (id: null) and a mock onDelete function.",
+            "then": "onDelete is called with null as argument.",
+            "when": "User clicks the delete button and confirms the confirmation prompt."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensures that if the confirmation dialog fails to appear, the onDelete callback is not called.",
+          "id": "TC_handleDelete_negative_no_confirmation_dialog",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "No confirmation dialog appears",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid task prop and a mock onDelete function. Confirmation dialog is suppressed or not rendered.",
+            "then": "onDelete is not called.",
+            "when": "User clicks the delete button."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Ensures the delete button is rendered and visible for each TaskItem.",
+          "id": "TC_handleDelete_positive_render_delete_button",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Delete button is visible",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid task prop.",
+            "then": "Delete button is present in the DOM and accessible.",
+            "when": "Component mounts."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensures that clicking delete on multiple TaskItems in sequence calls onDelete with corresponding ids each time.",
+          "id": "TC_handleDelete_edge_multiple_deletions",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Multiple consecutive deletions",
+          "test_setup": {
+            "given": "Two TaskItem components rendered with task ids 1 and 2, each with mock onDelete functions.",
+            "then": "onDelete is called first with 1, then with 2.",
+            "when": "User clicks delete and confirms on TaskItem 1, then clicks delete and confirms on TaskItem 2."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Ensures the component handles the case when the task prop is missing or undefined.",
+          "id": "TC_handleDelete_negative_no_task_prop",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Component without task prop",
+          "test_setup": {
+            "given": "TaskItem is rendered without a task prop and with a mock onDelete function.",
+            "then": "onDelete is not called, and an error or warning is handled gracefully.",
+            "when": "User clicks the delete button and confirms the confirmation prompt."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Ensures that rapidly clicking the delete button does not call onDelete multiple times for a single confirmation.",
+          "id": "TC_handleDelete_edge_rapid_clicks",
+          "implementation_id": "TaskItem_handleDelete",
+          "name": "Rapid multiple delete clicks",
+          "test_setup": {
+            "given": "TaskItem is rendered with a valid task prop (id: 1) and a mock onDelete function.",
+            "then": "onDelete is called once with 1.",
+            "when": "User rapidly clicks the delete button multiple times and confirms only one dialog."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "TaskItem_component_toggle_status",
+      "test_cases": [
+        {
+          "description": "Verifies that a pending task is rendered with correct details, 'Done' button, and no completed visual styling.",
+          "id": "taskitem_render_pending_task",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Render Pending Task",
+          "test_setup": {
+            "given": "TaskItem receives a task with completed: false, title: 'Test Task', priority: 'High'.",
+            "then": "The title 'Test Task' and priority 'High' are displayed. The button label is 'Done'. No line-through or reduced opacity is present.",
+            "when": "Component is rendered."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Verifies that a completed task is rendered with correct details, 'Undo' button, and completed visual styling.",
+          "id": "taskitem_render_completed_task",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Render Completed Task",
+          "test_setup": {
+            "given": "TaskItem receives a task with completed: true, title: 'Completed Task', priority: 'Low'.",
+            "then": "The title 'Completed Task' and priority 'Low' are displayed. The button label is 'Undo'. The title has line-through and/or reduced opacity.",
+            "when": "Component is rendered."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensures clicking the 'Done' button on a pending task calls onToggleComplete with the correct task object.",
+          "id": "taskitem_toggle_to_completed",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Toggle Pending Task to Completed",
+          "test_setup": {
+            "given": "TaskItem receives a pending task and a mock onToggleComplete handler.",
+            "then": "onToggleComplete is called once with the task object as argument.",
+            "when": "User clicks the 'Done' button."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Ensures clicking the 'Undo' button on a completed task calls onToggleComplete with the correct task object.",
+          "id": "taskitem_toggle_to_pending",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Toggle Completed Task to Pending",
+          "test_setup": {
+            "given": "TaskItem receives a completed task and a mock onToggleComplete handler.",
+            "then": "onToggleComplete is called once with the task object as argument.",
+            "when": "User clicks the 'Undo' button."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Checks component behavior when onToggleComplete is undefined or null.",
+          "id": "taskitem_no_onToggleComplete",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Handle Missing onToggleComplete Prop",
+          "test_setup": {
+            "given": "TaskItem receives a task but no onToggleComplete prop.",
+            "then": "Component does not crash; clicking the button does not throw errors.",
+            "when": "User clicks the toggle button."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Verifies component behavior when given a null or undefined task.",
+          "id": "taskitem_null_task",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Handle Null Task Prop",
+          "test_setup": {
+            "given": "TaskItem receives task: null.",
+            "then": "Component does not crash; displays nothing or shows a fallback UI.",
+            "when": "Component is rendered."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Ensures component renders gracefully when optional task fields (e.g., priority, description) are missing.",
+          "id": "taskitem_minimal_task_props",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Render Task With Minimal Props",
+          "test_setup": {
+            "given": "TaskItem receives a task with only required fields (e.g., id, title, completed).",
+            "then": "Required fields are shown. Optional fields are empty or omitted. No errors occur.",
+            "when": "Component is rendered."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Checks how the component displays a task with an unusually long title.",
+          "id": "taskitem_long_title",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Render Task With Very Long Title",
+          "test_setup": {
+            "given": "TaskItem receives a task with a title of length 255 characters.",
+            "then": "Title is displayed without breaking layout. Ellipsis or wrapping is handled appropriately.",
+            "when": "Component is rendered."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Simulates rapid double clicking the toggle button and checks callback invocations.",
+          "id": "taskitem_double_click_toggle",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Double Click Toggle Button Rapidly",
+          "test_setup": {
+            "given": "TaskItem receives a task and a mock onToggleComplete handler.",
+            "then": "onToggleComplete is called twice with the task object. No errors are thrown.",
+            "when": "User double-clicks the toggle button rapidly."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Verifies that the toggle button is accessible via keyboard and has appropriate ARIA attributes.",
+          "id": "taskitem_button_accessibility",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Toggle Button is Accessible",
+          "test_setup": {
+            "given": "TaskItem receives a task.",
+            "then": "onToggleComplete is called and button has correct ARIA labels/roles.",
+            "when": "User tabs to the toggle button and presses Enter or Space."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Checks that updating the task prop updates the UI accordingly.",
+          "id": "taskitem_prop_update",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Component Responds to Task Prop Change",
+          "test_setup": {
+            "given": "TaskItem is rendered with a pending task.",
+            "then": "Button label updates to 'Undo'. Completed styling is applied without remounting.",
+            "when": "The task prop is updated to completed: true."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Checks how the component handles unexpected priority values.",
+          "id": "taskitem_unknown_priority_value",
+          "implementation_id": "TaskItem_component_toggle_status",
+          "name": "Render Task With Unknown Priority Value",
+          "test_setup": {
+            "given": "TaskItem receives a task with priority: 'UnexpectedValue'.",
+            "then": "Component displays the priority as-is or shows a fallback (like 'Unknown'). No errors occur.",
+            "when": "Component is rendered."
+          },
+          "type": "edge"
+        }
+      ]
+    }
+  ],
+  "endpoint": [
+    {
+      "implementation_id": "backend-create-task-endpoint",
+      "test_cases": [
+        {
+          "description": "Create a new task with all required fields and valid values.",
+          "id": "create_task_valid_payload",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Valid Payload",
+          "request_body_json": {
+            "description": "Write comprehensive functional tests for the create_task endpoint.",
+            "due_date": "2024-07-01",
+            "priority": 2,
+            "title": "Write API Tests"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "created_at": "2024-06-15T12:00:00Z",
+            "description": "Write comprehensive functional tests for the create_task endpoint.",
+            "due_date": "2024-07-01",
+            "id": 1,
+            "priority": 2,
+            "title": "Write API Tests"
+          },
+          "response_status_code": 201,
+          "test_setup": {
+            "given": "The database is empty.",
+            "then": "A new task is created and returned with status code 201.",
+            "when": "A POST request is sent to /tasks with a valid TaskCreate payload."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempt to create a task without the required title field.",
+          "id": "create_task_missing_title",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Missing Title",
+          "request_body_json": {
+            "description": "Task without title",
+            "due_date": "2024-07-01",
+            "priority": 1
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "title"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "The API expects title as a required field.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent without title."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempt to create a task with an empty string for title.",
+          "id": "create_task_empty_title",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Empty Title",
+          "request_body_json": {
+            "description": "Empty title test",
+            "due_date": "2024-07-01",
+            "priority": 1,
+            "title": ""
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "title"
+                ],
+                "msg": "Title must not be empty",
+                "type": "value_error"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Title field is required and must not be empty.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with an empty string for title."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to create a task with a title exceeding the maximum length (e.g., 255 characters).",
+          "id": "create_task_long_title",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Excessively Long Title",
+          "request_body_json": {
+            "description": "Long title test",
+            "due_date": "2024-07-01",
+            "priority": 1,
+            "title": "T.repeat(256)"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "title"
+                ],
+                "msg": "Title must be at most 255 characters",
+                "type": "value_error"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Title has a maximum length of 255 characters.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with a title of 256 characters."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to create a task with an invalid due_date format (e.g., '01-07-2024').",
+          "id": "create_task_invalid_due_date_format",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Invalid Due Date Format",
+          "request_body_json": {
+            "description": "Testing due_date format validation",
+            "due_date": "01-07-2024",
+            "priority": 1,
+            "title": "Invalid due date"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "due_date"
+                ],
+                "msg": "invalid date format",
+                "type": "type_error"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "due_date must be in ISO format (YYYY-MM-DD).",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with due_date in an invalid format."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Create a task with only the required fields (e.g., title), omitting optional fields.",
+          "id": "create_task_missing_optional_fields",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Only Required Fields",
+          "request_body_json": {
+            "title": "Minimal Task"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "created_at": "2024-06-15T12:01:00Z",
+            "description": null,
+            "due_date": null,
+            "id": 2,
+            "priority": null,
+            "title": "Minimal Task"
+          },
+          "response_status_code": 201,
+          "test_setup": {
+            "given": "Only title is required.",
+            "then": "Task is created with default/null values for optional fields.",
+            "when": "A POST request is sent with only the title field."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempt to create a task with a negative priority value.",
+          "id": "create_task_negative_priority",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Negative Priority",
+          "request_body_json": {
+            "description": "Priority should be positive",
+            "due_date": "2024-07-01",
+            "priority": -1,
+            "title": "Negative Priority"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "priority"
+                ],
+                "msg": "Priority must be non-negative",
+                "type": "value_error"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Priority must be zero or positive.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with priority -1."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Create a task with the maximum allowed priority value (e.g., 10).",
+          "id": "create_task_priority_upper_bound",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Priority at Upper Bound",
+          "request_body_json": {
+            "description": "Testing boundary value for priority",
+            "due_date": "2024-07-01",
+            "priority": 10,
+            "title": "High Priority Task"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "created_at": "2024-06-15T12:02:00Z",
+            "description": "Testing boundary value for priority",
+            "due_date": "2024-07-01",
+            "id": 3,
+            "priority": 10,
+            "title": "High Priority Task"
+          },
+          "response_status_code": 201,
+          "test_setup": {
+            "given": "Priority has an upper bound of 10.",
+            "then": "Task is created successfully.",
+            "when": "A POST request is sent with priority 10."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to create a task with a priority value greater than the allowed maximum (e.g., 11).",
+          "id": "create_task_priority_overflow",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Priority Exceeding Upper Bound",
+          "request_body_json": {
+            "description": "Priority exceeds upper bound",
+            "due_date": "2024-07-01",
+            "priority": 11,
+            "title": "Overflow Priority"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "priority"
+                ],
+                "msg": "Priority must be at most 10",
+                "type": "value_error"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Priority has an upper bound of 10.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with priority 11."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to create a task with priority as a string instead of an integer.",
+          "id": "create_task_invalid_priority_type",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Invalid Priority Type",
+          "request_body_json": {
+            "description": "Priority must be integer",
+            "due_date": "2024-07-01",
+            "priority": "high",
+            "title": "Invalid Priority Type"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "priority"
+                ],
+                "msg": "value is not a valid integer",
+                "type": "type_error.integer"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Priority must be an integer.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with priority as a string."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempt to create a task without sending any request body.",
+          "id": "create_task_no_body",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with No Request Body",
+          "request_body_json": null,
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "At least title is required in the request body.",
+            "then": "Validation error is returned with status code 422.",
+            "when": "A POST request is sent with no body."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempt to create a task with fields not defined in the schema.",
+          "id": "create_task_extra_fields",
+          "implementation_id": "backend-create-task-endpoint",
+          "name": "Create Task with Extra Fields",
+          "request_body_json": {
+            "description": "Has extra fields",
+            "due_date": "2024-07-01",
+            "priority": 1,
+            "title": "Extra Fields",
+            "unexpected_field": "should be ignored"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "POST",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "created_at": "2024-06-15T12:03:00Z",
+            "description": "Has extra fields",
+            "due_date": "2024-07-01",
+            "id": 4,
+            "priority": 1,
+            "title": "Extra Fields"
+          },
+          "response_status_code": 201,
+          "test_setup": {
+            "given": "The schema ignores extra fields.",
+            "then": "Task is created and extra fields are ignored.",
+            "when": "A POST request is sent with an extra field."
+          },
+          "type": "edge"
+        }
+      ]
+    },
+    {
+      "implementation_id": "backend-endpoint-update-task",
+      "test_cases": [
+        {
+          "description": "Update an existing task with valid data. Expect the updated task to be returned.",
+          "id": "update_task_positive_valid_task",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task Successfully",
+          "request_body_json": {
+            "completed": true,
+            "description": "Updated task description",
+            "title": "New Task Title"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "completed": true,
+            "description": "Updated task description",
+            "id": 123,
+            "title": "New Task Title"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "Task is updated and the updated task is returned.",
+            "when": "PUT request sent to /tasks/123 with valid update payload."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempt to update a task that does not exist. Expect a 404 error.",
+          "id": "update_task_negative_task_not_found",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Non-existent Task",
+          "request_body_json": {
+            "completed": false,
+            "description": "This task does not exist",
+            "title": "Will Not Find"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/9999",
+          "response_body_json": {
+            "detail": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "Task with ID 9999 does not exist in the database.",
+            "then": "API responds with 404 error indicating task not found.",
+            "when": "PUT request sent to /tasks/9999."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempt to update a task with a missing required field 'title'. Expect a 422 error.",
+          "id": "update_task_negative_invalid_body_missing_title",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Missing Required Field",
+          "request_body_json": {
+            "completed": false,
+            "description": "Missing title field"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "title"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "API returns 422 validation error.",
+            "when": "PUT request sent to /tasks/123 with missing 'title' field."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Update a task with an empty string for 'title'. Check for acceptance or validation error.",
+          "id": "update_task_edge_empty_title",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Empty Title",
+          "request_body_json": {
+            "completed": false,
+            "description": "Title is empty",
+            "title": ""
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "completed": false,
+            "description": "Title is empty",
+            "id": 123,
+            "title": ""
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "API accepts the update and returns updated task, unless title has validation constraints.",
+            "when": "PUT request sent to /tasks/123 with empty string for 'title'."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to update a task with 'completed' field as a string instead of a boolean. Expect a 422 error.",
+          "id": "update_task_negative_invalid_completed_type",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Invalid 'completed' Type",
+          "request_body_json": {
+            "completed": "yes",
+            "description": "completed should be boolean",
+            "title": "Invalid completed type"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "completed"
+                ],
+                "msg": "value is not a valid boolean",
+                "type": "type_error.bool"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "API returns 422 validation error.",
+            "when": "PUT request sent to /tasks/123 with 'completed' as string."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Update a task with a very large description field.",
+          "id": "update_task_edge_large_description",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Large Description",
+          "request_body_json": {
+            "completed": false,
+            "description": "T.repeat(10000)",
+            "title": "Task with Large Description"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "completed": false,
+            "description": "T.repeat(10000)",
+            "id": 123,
+            "title": "Task with Large Description"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "API accepts the update if no maximum length constraint, and returns updated task.",
+            "when": "PUT request sent to /tasks/123 with description of 10,000 characters."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Update a task using only required fields with minimal values.",
+          "id": "update_task_edge_minimal_body",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Minimal Valid Body",
+          "request_body_json": {
+            "completed": false,
+            "description": "",
+            "title": "A"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/124",
+          "response_body_json": {
+            "completed": false,
+            "description": "",
+            "id": 124,
+            "title": "A"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "Task with ID 124 exists in the database.",
+            "then": "API updates and returns the task with minimal values.",
+            "when": "PUT request sent to /tasks/124 with minimal valid values."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to update a task with an empty request body. Expect a 422 error.",
+          "id": "update_task_negative_empty_body",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Empty Body",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "title"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              },
+              {
+                "loc": [
+                  "body",
+                  "description"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              },
+              {
+                "loc": [
+                  "body",
+                  "completed"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "API returns 422 validation errors for missing fields.",
+            "when": "PUT request sent to /tasks/123 with empty body."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempt to update a task with a very large numeric task_id.",
+          "id": "update_task_edge_long_task_id",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Very Large task_id",
+          "request_body_json": {
+            "completed": false,
+            "description": "Using a very large task_id",
+            "title": "Edge Task ID"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/9223372036854775807",
+          "response_body_json": {
+            "detail": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "Task with ID 9223372036854775807 does not exist.",
+            "then": "API responds with 404 error.",
+            "when": "PUT request sent to /tasks/9223372036854775807."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempt to update a task with a malformed JSON body. Expect a 400 error.",
+          "id": "update_task_negative_invalid_json",
+          "implementation_id": "backend-endpoint-update-task",
+          "name": "Update Task With Invalid JSON",
+          "request_body_json": "INVALID_JSON_STRING",
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "detail": "Malformed request body"
+          },
+          "response_status_code": 400,
+          "test_setup": {
+            "given": "Task with ID 123 exists in the database.",
+            "then": "API returns 400 Bad Request error.",
+            "when": "PUT request sent to /tasks/123 with invalid JSON body."
+          },
+          "type": "negative"
+        }
+      ]
+    },
+    {
+      "implementation_id": "backend_delete_task_endpoint",
+      "test_cases": [
+        {
+          "description": "Successfully deletes a task that exists in the database.",
+          "id": "delete_task_positive_existing_task",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete existing task",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "message": "Task deleted successfully"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "A task with ID 123 exists in the database.",
+            "then": "The task is removed from the database. A 200 OK response with a success message is returned.",
+            "when": "A DELETE request is made to /tasks/123."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempts to delete a task that does not exist, expecting a 404 error.",
+          "id": "delete_task_negative_nonexistent_task",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete non-existent task",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/9999",
+          "response_body_json": {
+            "error": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "No task with ID 9999 exists in the database.",
+            "then": "A 404 Not Found error is returned.",
+            "when": "A DELETE request is made to /tasks/9999."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task with a non-integer task_id, expecting a 404 or 400 error.",
+          "id": "delete_task_negative_invalid_id_string",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete task with invalid task_id (string)",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/abc",
+          "response_body_json": {
+            "error": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "A DELETE request is made with a non-integer task_id ('abc').",
+            "then": "A 404 Not Found or 400 Bad Request error is returned due to invalid task_id.",
+            "when": "A DELETE request is made to /tasks/abc."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task without providing a task_id in the URL, expecting a 404 error.",
+          "id": "delete_task_negative_missing_task_id",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete task with missing task_id",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/",
+          "response_body_json": {
+            "error": "Not Found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "No task_id is provided in the DELETE request URL.",
+            "then": "A 404 Not Found error is returned.",
+            "when": "A DELETE request is made to /tasks/."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task with task_id containing special characters, expecting a 404 or 400 error.",
+          "id": "delete_task_negative_invalid_id_special_chars",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete task with task_id containing special characters",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/!@#$",
+          "response_body_json": {
+            "error": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "A DELETE request is made with a task_id containing special characters.",
+            "then": "A 404 Not Found or 400 Bad Request error is returned due to invalid task_id.",
+            "when": "A DELETE request is made to /tasks/!@#$."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to delete a task with task_id=0, which may be a boundary value.",
+          "id": "delete_task_edge_task_id_zero",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete task with task_id zero",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/0",
+          "response_body_json": {
+            "error": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "No task with ID 0 exists in the database.",
+            "then": "A 404 Not Found error is returned.",
+            "when": "A DELETE request is made to /tasks/0."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task with a negative task_id, expecting a 404 or 400 error.",
+          "id": "delete_task_edge_task_id_negative",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete task with negative task_id",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/-1",
+          "response_body_json": {
+            "error": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "A DELETE request is made with a negative task_id.",
+            "then": "A 404 Not Found or 400 Bad Request error is returned due to invalid task_id.",
+            "when": "A DELETE request is made to /tasks/-1."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to delete a task with a very large integer task_id, testing boundary conditions.",
+          "id": "delete_task_edge_large_task_id",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Delete task with large integer task_id",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks/999999999999",
+          "response_body_json": {
+            "error": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "No task with ID 999999999999 exists in the database.",
+            "then": "A 404 Not Found error is returned.",
+            "when": "A DELETE request is made to /tasks/999999999999."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to DELETE without specifying a task_id, expecting a 404 error.",
+          "id": "delete_task_negative_wrong_method",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Send DELETE request to /tasks without task_id",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "DELETE",
+          "request_url": "/tasks",
+          "response_body_json": {
+            "error": "Not Found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "A DELETE request is made to /tasks without specifying a task_id.",
+            "then": "A 404 Not Found error is returned.",
+            "when": "A DELETE request is made to /tasks."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to send a GET request to the delete endpoint, expecting a 405 error.",
+          "id": "delete_task_negative_wrong_method_get",
+          "implementation_id": "backend_delete_task_endpoint",
+          "name": "Send GET request to delete endpoint",
+          "request_body_json": {},
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "GET",
+          "request_url": "/tasks/123",
+          "response_body_json": {
+            "error": "Method Not Allowed"
+          },
+          "response_status_code": 405,
+          "test_setup": {
+            "given": "A task with ID 123 exists in the database.",
+            "then": "A 405 Method Not Allowed error is returned.",
+            "when": "A GET request is made to /tasks/123."
+          },
+          "type": "negative"
+        }
+      ]
+    },
+    {
+      "implementation_id": "backend_update_task_endpoint",
+      "test_cases": [
+        {
+          "description": "Successfully updates an existing task with new title, description, and completed status.",
+          "id": "update_task_positive_full_update",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Task Successfully with All Fields",
+          "request_body_json": {
+            "completed": true,
+            "description": "Updated description for the task.",
+            "title": "Updated Task Title"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/1",
+          "response_body_json": {
+            "completed": true,
+            "description": "Updated description for the task.",
+            "id": 1,
+            "title": "Updated Task Title"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "A task with id 1 exists in the database.",
+            "then": "The response has status 200 and returns the updated task data.",
+            "when": "A PUT request is sent to /tasks/1 with updated title, description, and completed status."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Successfully toggles the completion status of an existing task.",
+          "id": "update_task_positive_toggle_completion",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Toggle Task Completion Status",
+          "request_body_json": {
+            "completed": false
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/2",
+          "response_body_json": {
+            "completed": false,
+            "description": "Sample description",
+            "id": 2,
+            "title": "Sample Task"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "A task with id 2 exists and has completed=true.",
+            "then": "The response has status 200 and the returned task has completed=false.",
+            "when": "A PUT request is sent to /tasks/2 with completed=false."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempts to update a task with an ID that does not exist; should return 404.",
+          "id": "update_task_negative_task_not_found",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Non-Existent Task",
+          "request_body_json": {
+            "completed": true,
+            "title": "Does not matter"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/9999",
+          "response_body_json": {
+            "detail": "Task not found"
+          },
+          "response_status_code": 404,
+          "test_setup": {
+            "given": "No task with id 9999 exists.",
+            "then": "The response has status 404 with a Task not found message.",
+            "when": "A PUT request is sent to /tasks/9999."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task with a non-boolean completed value; should result in validation error.",
+          "id": "update_task_negative_invalid_completed_type",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Task with Invalid Completed Type",
+          "request_body_json": {
+            "completed": "yes"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/3",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "completed"
+                ],
+                "msg": "value could not be parsed to a boolean",
+                "type": "type_error.bool"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "A task with id 3 exists.",
+            "then": "The response has status 422 with a validation error for completed.",
+            "when": "A PUT request is sent to /tasks/3 with completed as a string ('yes')."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Attempts to update a task without providing a request body; should result in a validation error.",
+          "id": "update_task_negative_missing_body",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Task with Missing Body",
+          "request_body_json": null,
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/4",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body"
+                ],
+                "msg": "field required",
+                "type": "value_error.missing"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "A task with id 4 exists.",
+            "then": "The response has status 422 with a field required error.",
+            "when": "A PUT request is sent to /tasks/4 without a request body."
+          },
+          "type": "negative"
+        },
+        {
+          "description": "Updates a task with a title at the maximum allowed length.",
+          "id": "update_task_edge_long_title",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Task with Maximum Title Length",
+          "request_body_json": {
+            "completed": false,
+            "description": "Edge case for long title.",
+            "title": "T.repeat(255)"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/5",
+          "response_body_json": {
+            "completed": false,
+            "description": "Edge case for long title.",
+            "id": 5,
+            "title": "T.repeat(255)"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "A task with id 5 exists. Title field allows up to 255 characters.",
+            "then": "The response has status 200 and the updated task is returned with the long title.",
+            "when": "A PUT request is sent to /tasks/5 with a 255-character title."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Attempts to update a task with an empty title string; should result in a validation error if title cannot be empty.",
+          "id": "update_task_edge_empty_title",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Task with Empty Title",
+          "request_body_json": {
+            "completed": true,
+            "title": ""
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/6",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body",
+                  "title"
+                ],
+                "msg": "Title must not be empty",
+                "type": "value_error"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "A task with id 6 exists. Title field is required and cannot be empty.",
+            "then": "The response has status 422 and a validation error for the title.",
+            "when": "A PUT request is sent to /tasks/6 with an empty title."
+          },
+          "type": "edge"
+        },
+        {
+          "description": "Updates only the title of a task, other fields remain unchanged.",
+          "id": "update_task_positive_partial_update",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Partial Update Only Title",
+          "request_body_json": {
+            "title": "New Only Title"
+          },
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/7",
+          "response_body_json": {
+            "completed": false,
+            "description": "Original description",
+            "id": 7,
+            "title": "New Only Title"
+          },
+          "response_status_code": 200,
+          "test_setup": {
+            "given": "A task with id 7 exists with description='Original description' and completed=false.",
+            "then": "The response has status 200 and only the title is updated.",
+            "when": "A PUT request is sent to /tasks/7 with a new title only."
+          },
+          "type": "positive"
+        },
+        {
+          "description": "Attempts to update a task with an invalid JSON body; should result in a 422 error.",
+          "id": "update_task_negative_invalid_json",
+          "implementation_id": "backend_update_task_endpoint",
+          "name": "Update Task with Invalid JSON Body",
+          "request_body_json": "{ \"title\": \"Missing quote }",
+          "request_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_method": "PUT",
+          "request_url": "/tasks/8",
+          "response_body_json": {
+            "detail": [
+              {
+                "loc": [
+                  "body"
+                ],
+                "msg": "Expecting '}' delimiter",
+                "type": "value_error.jsondecode"
+              }
+            ]
+          },
+          "response_status_code": 422,
+          "test_setup": {
+            "given": "A task with id 8 exists.",
+            "then": "The response has status 422 and a JSON decode error.",
+            "when": "A PUT request is sent to /tasks/8 with a malformed JSON body."
+          },
+          "type": "negative"
+        }
+      ]
+    }
+  ]
 }
